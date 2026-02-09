@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Galactic Defender - Force Ad</title>
+    <title>Galactic Defender</title>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&display=swap');
         :root { --primary: #00ffff; --secondary: #ff0055; --gold: #ffd700; --power: #ff3300; }
@@ -70,14 +70,47 @@
 
 <script>
 /**
- * GALACTIC DEFENDER - Force Ad Load Fix
+ * GALACTIC DEFENDER - AppCreator24 + GitHub Assets
  */
-const ASSETS={bg:'bg.png',bullet:'bullet.png',planes:['plane1.png','plane2.png','plane3.png'],enemies:['obscle1.png','obscle2.png'],bosses:['boss1.png','boss2.png','boss3.png'],sounds:{bgm:'bgm.wav',shoot:'bullet.wav',explo:'explosion.wav'}};
-const IMAGES={},AUDIO={};
-function loadAssets(){Object.keys(ASSETS).forEach(k=>{if(Array.isArray(ASSETS[k])){ASSETS[k].forEach((s,i)=>{let m=new Image();m.src=s;IMAGES[k==='planes'?'plane'+i:(k==='enemies'?'enemy'+i:'boss'+i)]=m;});}else if(typeof ASSETS[k]==='string'){let m=new Image();m.src=ASSETS[k];IMAGES[k]=m;}});AUDIO.bgm=new Audio(ASSETS.sounds.bgm);AUDIO.bgm.loop=true;AUDIO.shoot=new Audio(ASSETS.sounds.shoot);AUDIO.explo=new Audio(ASSETS.sounds.explo);}
 
-const STORAGE_KEY='galactic_admob_v3';
-const RESUME_KEY='galactic_resume_state';
+// GitHub Base URL (আপনার গিটহাবের ফাইলগুলো এখান থেকে লোড হবে)
+const BASE_URL = "https://emdadm511-alt.github.io/galactic-game/";
+
+const ASSETS = {
+    bg: BASE_URL + 'bg.png',
+    bullet: BASE_URL + 'bullet.png',
+    planes: [BASE_URL+'plane1.png', BASE_URL+'plane2.png', BASE_URL+'plane3.png'],
+    enemies: [BASE_URL+'obscle1.png', BASE_URL+'obscle2.png'],
+    bosses: [BASE_URL+'boss1.png', BASE_URL+'boss2.png', BASE_URL+'boss3.png'],
+    sounds: {
+        bgm: BASE_URL + 'bgm.wav',
+        shoot: BASE_URL + 'bullet.wav',
+        explo: BASE_URL + 'explosion.wav'
+    }
+};
+
+const IMAGES={},AUDIO={};
+
+function loadAssets(){
+    // Images Load with GitHub Link
+    ['bg', 'bullet'].forEach(k => { 
+        let img = new Image(); 
+        img.src = ASSETS[k]; 
+        IMAGES[k] = img; 
+    });
+    
+    ASSETS.planes.forEach((src, i) => { let m=new Image(); m.src=src; IMAGES['plane'+i]=m; });
+    ASSETS.enemies.forEach((src, i) => { let m=new Image(); m.src=src; IMAGES['enemy'+i]=m; });
+    ASSETS.bosses.forEach((src, i) => { let m=new Image(); m.src=src; IMAGES['boss'+i]=m; });
+
+    // Audio Load
+    AUDIO.bgm = new Audio(ASSETS.sounds.bgm); AUDIO.bgm.loop = true;
+    AUDIO.shoot = new Audio(ASSETS.sounds.shoot);
+    AUDIO.explo = new Audio(ASSETS.sounds.explo);
+}
+
+const STORAGE_KEY='galactic_admob_final';
+const RESUME_KEY='galactic_resume_state'; 
 
 const Data={coins:0,maxLevel:1,unlockedShips:[0],selectedShip:0,dmgLvl:1,settings:{music:true,sfx:true,vib:true},load:function(){const s=localStorage.getItem(STORAGE_KEY);if(s)Object.assign(this,JSON.parse(s));},save:function(){localStorage.setItem(STORAGE_KEY,JSON.stringify(this));}};
 
@@ -85,16 +118,16 @@ const cvs=document.getElementById('gameCanvas');const ctx=cvs.getContext('2d',{a
 let width,height,state='MENU',level=1,score=0,kills=0,targetKills=0,frame=0,shake=0,bomb=1,player,boss=null,bullets=[],enemies=[],particles=[],items=[],stars=[];
 const input={x:0,y:0,active:false};
 
-// ... [ENTITIES Class (Player, Enemy, Boss) - SAME AS BEFORE, NO CHANGE NEEDED] ...
+// ... ENTITIES (Player, Enemy, Boss) ...
 class Player{constructor(){this.x=width/2;this.y=height-120;this.w=60;this.h=60;this.hp=3;this.shieldTimer=0;this.lastShot=0;this.powerLevel=1;this.maxPower=4;input.x=this.x;input.y=this.y;}update(){if(input.active){this.x+=(input.x-this.x)*0.15;this.y+=((input.y-60)-this.y)*0.15;}this.x=Math.max(30,Math.min(width-30,this.x));this.y=Math.max(30,Math.min(height-30,this.y));if(state==='PLAY'){let r=this.powerLevel>=4?8:15;if(frame-this.lastShot>r){this.shoot();this.lastShot=frame;}if(this.shieldTimer>0)this.shieldTimer--;}}shoot(){if(Data.settings.sfx&&state==='PLAY'){let s=AUDIO.shoot.cloneNode();s.volume=0.12;s.play().catch(()=>{});}let pm=1+(this.powerLevel-1)*0.5;let d=Data.dmgLvl*pm;if(Data.selectedShip===0){bullets.push({x:this.x,y:this.y-30,vx:0,vy:-12,dmg:d,enemy:false});}else{bullets.push({x:this.x-10,y:this.y-30,vx:0,vy:-12,dmg:d,enemy:false});bullets.push({x:this.x+10,y:this.y-30,vx:0,vy:-12,dmg:d,enemy:false});}if(this.powerLevel>=2){bullets.push({x:this.x-25,y:this.y,vx:-1,vy:-10,dmg:d,enemy:false});bullets.push({x:this.x+25,y:this.y,vx:1,vy:-10,dmg:d,enemy:false});}if(this.powerLevel>=3){bullets.push({x:this.x-35,y:this.y+10,vx:-3,vy:-9,dmg:d,enemy:false});bullets.push({x:this.x+35,y:this.y+10,vx:3,vy:-9,dmg:d,enemy:false});}}draw(){let i=IMAGES['plane'+Data.selectedShip];if(i&&i.complete){ctx.shadowBlur=15;ctx.shadowColor='#00ffff';ctx.drawImage(i,this.x-30,this.y-30,60,60);ctx.shadowBlur=0;}else{ctx.fillStyle='#0ff';ctx.fillRect(this.x-20,this.y-20,40,40);}if(this.shieldTimer>0){ctx.strokeStyle=`rgba(0,255,255,${Math.random()})`;ctx.lineWidth=3;ctx.beginPath();ctx.arc(this.x,this.y,45,0,Math.PI*2);ctx.stroke();}}upgrade(){if(this.powerLevel<this.maxPower){this.powerLevel++;spawnFloatText(this.x,this.y-40,"WEAPON UP!","#ff3300");UI.updatePowerBars();}else{score+=500;spawnFloatText(this.x,this.y-40,"MAX POWER!","#ff3300");}}}
 class Enemy{constructor(t){this.x=Math.random()*(width-60)+30;this.y=-50;this.type=t;this.hp=Math.floor(2+(level*0.7));this.w=50;this.h=50;this.age=0;this.imgKey='enemy'+(Math.random()>0.5?0:1);let sm=1+(level*0.05);this.vy=(2+Math.random())*sm;this.vx=(t===1)?(Math.random()<0.5?-2:2)*sm:0;}update(){this.age++;if(this.type===1){this.x+=this.vx;if(this.x<30||this.x>width-30)this.vx*=-1;}this.y+=this.vy;let sp=Math.min(0.03,0.005+(level*0.001));if(Math.random()<sp)bullets.push({x:this.x,y:this.y+25,vx:0,vy:6+(level*0.2),dmg:1,enemy:true});return this.y<height+60;}draw(){let i=IMAGES[this.imgKey];if(i&&i.complete)ctx.drawImage(i,this.x-25,this.y-25,50,50);else{ctx.fillStyle='red';ctx.fillRect(this.x-20,this.y-20,40,40);}}}
 class Boss{constructor(l){this.x=width/2;this.y=-150;this.maxHp=300+(l*150);this.hp=this.maxHp;this.dir=1;this.timer=0;let idx=(l-1)%3;this.imgKey='boss'+idx;}update(){if(this.y<200)this.y+=1;else{this.x+=2*this.dir;if(this.x>width-80||this.x<80)this.dir*=-1;this.timer++;let ar=Math.max(30,60-(level*2));if(this.timer%ar===0){let sp=Math.min(3,1+Math.floor(level/5));for(let i=-sp;i<=sp;i++)bullets.push({x:this.x,y:this.y+60,vx:i*1.5,vy:6,dmg:1,enemy:true});}}UI.updateBossHp(this.hp,this.maxHp);}draw(){let i=IMAGES[this.imgKey];if(i&&i.complete)ctx.drawImage(i,this.x-75,this.y-60,150,120);else{ctx.fillStyle='purple';ctx.fillRect(this.x-60,this.y-40,120,80);}}}
+
 function spawnParticles(x,y,c){if(particles.length>50)particles.splice(0,10);for(let i=0;i<6;i++)particles.push({x:x,y:y,vx:(Math.random()-0.5)*10,vy:(Math.random()-0.5)*10,life:1,color:c});}
 function spawnFloatText(x,y,t,c){let d=document.createElement('div');d.className='float-text';d.style.left=x+'px';d.style.top=y+'px';d.style.color=c||'gold';d.innerText=t;document.body.appendChild(d);setTimeout(()=>d.remove(),800);}
 function distSq(o1,o2){let dx=o1.x-o2.x,dy=o1.y-o2.y;return dx*dx+dy*dy;}
 
 function init(){Data.load();loadAssets();resize();window.addEventListener('resize',resize);setupInput();for(let i=0;i<60;i++)stars.push({x:Math.random()*width,y:Math.random()*height,s:Math.random()*2+0.5});UI.updateShipSelector();
-    // Check for Resume Data
     const resumeData = localStorage.getItem(RESUME_KEY);
     if(resumeData){
         const d=JSON.parse(resumeData);
@@ -108,35 +141,42 @@ function resize(){width=cvs.width=window.innerWidth;height=cvs.height=window.inn
 function setupInput(){const s=(e)=>{e.preventDefault();input.active=true;let t=e.touches?e.touches[0]:e;input.x=t.clientX;input.y=t.clientY;};const m=(e)=>{if(input.active){let t=e.touches?e.touches[0]:e;input.x=t.clientX;input.y=t.clientY;}};cvs.addEventListener('touchstart',s,{passive:false});cvs.addEventListener('touchmove',m,{passive:false});cvs.addEventListener('mousedown',s);window.addEventListener('mousemove',m);window.addEventListener('mouseup',()=>input.active=false);}
 
 function loop(){
-    requestAnimationFrame(loop);ctx.fillStyle='#000510';ctx.fillRect(0,0,width,height);if(IMAGES.bg&&IMAGES.bg.complete){ctx.globalAlpha=0.6;ctx.drawImage(IMAGES.bg,0,0,width,height);ctx.globalAlpha=1;}ctx.fillStyle='#fff';stars.forEach(s=>{s.y+=s.s;if(s.y>height)s.y=0;ctx.fillRect(s.x,s.y,s.s,s.s);});
+    requestAnimationFrame(loop);ctx.fillStyle='#000510';ctx.fillRect(0,0,width,height);
+    
+    // Draw BG from GitHub
+    if(IMAGES.bg&&IMAGES.bg.complete){ctx.globalAlpha=0.6;ctx.drawImage(IMAGES.bg,0,0,width,height);ctx.globalAlpha=1;}
+    
+    ctx.fillStyle='#fff';stars.forEach(s=>{s.y+=s.s;if(s.y>height)s.y=0;ctx.fillRect(s.x,s.y,s.s,s.s);});
     if(state!=='PLAY')return;
     frame++;if(shake>0){ctx.save();ctx.translate((Math.random()-0.5)*15,(Math.random()-0.5)*15);shake--;}
     player.update();player.draw();
     if(!boss){if(kills>=targetKills){boss=new Boss(level);enemies=[];document.getElementById('bossHud').style.display='block';if(Data.settings.vib)navigator.vibrate([100,50,100]);}else{let sr=Math.min(0.08,0.015+(level*0.003));let me=Math.min(12,4+Math.floor(level/2));if(Math.random()<sr&&enemies.length<me){let t=0;if(level>3&&Math.random()>0.7)t=1;enemies.push(new Enemy(t));}}}else{boss.update();boss.draw();if(distSq(boss,player)<4000)hitPlayer();}
     for(let i=bullets.length-1;i>=0;i--){let b=bullets[i];b.x+=b.vx;b.y+=b.vy;if(b.enemy){ctx.fillStyle='#ff3333';ctx.beginPath();ctx.arc(b.x,b.y,6,0,Math.PI*2);ctx.fill();if(distSq(b,player)<900){hitPlayer();bullets.splice(i,1);}}else{if(IMAGES.bullet&&IMAGES.bullet.complete)ctx.drawImage(IMAGES.bullet,b.x-10,b.y-10,20,35);else{ctx.fillStyle='#0ff';ctx.fillRect(b.x-3,b.y-5,6,15);}let h=false;if(boss&&Math.abs(b.x-boss.x)<70&&Math.abs(b.y-boss.y)<50){boss.hp-=b.dmg;h=true;spawnParticles(b.x,b.y,'purple');if(boss.hp<=0)killBoss();}else if(!boss){for(let j=enemies.length-1;j>=0;j--){if(distSq(b,enemies[j])<1600){enemies[j].hp-=b.dmg;h=true;if(enemies[j].hp<=0){killEnemy(enemies[j]);enemies.splice(j,1);}break;}}}if(h)bullets.splice(i,1);}if(b.y<-50||b.y>height+50)bullets.splice(i,1);}
     for(let i=enemies.length-1;i>=0;i--){if(!enemies[i].update()){enemies.splice(i,1);continue;}enemies[i].draw();if(distSq(enemies[i],player)<2500){hitPlayer();spawnParticles(enemies[i].x,enemies[i].y,'red');enemies.splice(i,1);}}
+    
+    // Items with Cleanup
     for(let i=items.length-1;i>=0;i--){let it=items[i];it.y+=3;if(it.type===3){ctx.fillStyle='#ff3300';ctx.shadowBlur=15;ctx.shadowColor='red';ctx.beginPath();ctx.arc(it.x,it.y,12,0,Math.PI*2);ctx.fill();ctx.fillStyle='#fff';ctx.font='bold 16px Arial';ctx.fillText('⚡',it.x-6,it.y+6);ctx.shadowBlur=0;}else{ctx.fillStyle=it.type===0?'gold':(it.type===1?'lime':'cyan');ctx.beginPath();ctx.arc(it.x,it.y,10,0,Math.PI*2);ctx.fill();ctx.fillStyle='#000';ctx.font='bold 12px Arial';ctx.fillText(it.type===0?'$':(it.type===1?'+':'S'),it.x-4,it.y+4);}if(distSq(it,player)<1600){if(it.type===0){Data.coins++;spawnFloatText(it.x,it.y,"+COIN");}if(it.type===1){player.hp=Math.min(3,player.hp+1);spawnFloatText(it.x,it.y,"HP UP","lime");}if(it.type===2){player.shieldTimer=300;spawnFloatText(it.x,it.y,"SHIELD","cyan");}if(it.type===3){player.upgrade();}items.splice(i,1);UI.updateScore();}else if(it.y>height+50)items.splice(i,1);}
+    
     for(let i=particles.length-1;i>=0;i--){let p=particles[i];p.life-=0.05;p.x+=p.vx;p.y+=p.vy;if(p.life<=0)particles.splice(i,1);else{ctx.globalAlpha=p.life;ctx.fillStyle=p.color;ctx.fillRect(p.x,p.y,4,4);ctx.globalAlpha=1;}}
     if(shake>0)ctx.restore();
 }
 
 function hitPlayer(){if(player.shieldTimer>0)return;player.hp--;shake=20;UI.updateScore();spawnFloatText(player.x,player.y,"-1 HP","red");if(Data.settings.vib)navigator.vibrate(300);if(player.hp<=0){state='OVER';AUDIO.bgm.pause();UI.showEndScreen(false);}}
-function killEnemy(e){spawnParticles(e.x,e.y,'orange');kills++;score+=10;UI.updateScore();spawnFloatText(e.x,e.y,"+10");if(Data.settings.sfx){let s=AUDIO.explo.cloneNode();s.volume=1.0;s.play().catch(()=>{});}let dc=Math.min(0.6,0.2+(level*0.008));if(Math.random()<dc){let r=Math.random();let t=0;let pc=Math.min(0.40,0.10+(level*0.006));if(r<pc)t=3;else if(r<pc+0.15)t=1;else if(r<pc+0.25)t=2;items.push({x:e.x,y:e.y,type:t});}}
+function killEnemy(e){
+    spawnParticles(e.x,e.y,'orange');kills++;score+=10;UI.updateScore();spawnFloatText(e.x,e.y,"+10");
+    if(Data.settings.sfx){let s=AUDIO.explo.cloneNode();s.volume=1.0;s.play().catch(()=>{});}
+    let dropChance=Math.min(0.6,0.2+(level*0.008));
+    if(Math.random()<dropChance){let r=Math.random();let t=0;let pc=Math.min(0.40,0.10+(level*0.006));if(r<pc)t=3;else if(r<pc+0.15)t=1;else if(r<pc+0.25)t=2;items.push({x:e.x,y:e.y,type:t});}
+}
 function killBoss(){shake=30;spawnParticles(boss.x,boss.y,'white');score+=1000*level;spawnFloatText(boss.x,boss.y,"+1000","#00ffff");if(Data.settings.sfx){AUDIO.explo.volume=1.0;AUDIO.explo.play().catch(()=>{});}if(level===Data.maxLevel){Data.maxLevel++;Data.save();}state='OVER';UI.showEndScreen(true);}
 function useBomb(){if(bomb>0&&state==='PLAY'){bomb--;document.getElementById('bombBtn').style.display='none';enemies=[];bullets=[];if(boss)boss.hp-=100;shake=40;ctx.fillStyle='white';ctx.fillRect(0,0,width,height);spawnFloatText(width/2,height/2,"BOOM!","red");}}document.getElementById('bombBtn').onclick=useBomb;
 
-// --- REVENUE LOGIC: TRIGGER ADMOB VIA FORCE RELOAD ---
+// --- FORCE AD RELOAD SYSTEM ---
 const AdSystem = {
     triggerAdAndAction: (action) => {
-        // 1. Save state
-        const saveData = {
-            action: action, level: level, score: score, kills: kills,
-            power: player ? player.powerLevel : 1,
-            bossHp: boss ? boss.hp : null, bossMax: boss ? boss.maxHp : null
-        };
+        const saveData = { action: action, level: level, score: score, kills: kills, power: player ? player.powerLevel : 1, bossHp: boss ? boss.hp : null, bossMax: boss ? boss.maxHp : null };
         localStorage.setItem(RESUME_KEY, JSON.stringify(saveData));
-        
-        // 2. FORCE RELOAD (Using timestamp trick to ensure AppCreator24 detects new page)
+        // Force new timestamp to trick AppCreator24
         let currentUrl = window.location.href.split('?')[0];
         window.location.href = currentUrl + "?t=" + new Date().getTime();
     }
